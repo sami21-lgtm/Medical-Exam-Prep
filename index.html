@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>মেডিকেল মডেল টেস্ট ২০২৬ (সব রাইটার + ডুপ্লিকেট চেকার)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display:none;">
+        <div class="spinner"></div>
+        <h3 id="loading-text">প্রশ্নপত্র তৈরি হচ্ছে...</h3>
+        <p id="loading-subtext">অনুগ্রহ করে অপেক্ষা করুন</p>
+        <div class="progress-bar-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="user-avatar">🏥</div>
+            <div>
+                <h2>মেডিকেল ভর্তি পরীক্ষা ২০২৬</h2>
+                <small id="status-mode">অফলাইন/অনলাইন জেনারেটর (ডুপ্লিকেট প্রতিরোধক ও সব লেখকের বই)</small>
+            </div>
+        </div>
+        
+        <div class="header-actions">
+            <button class="btn btn-key" onclick="setApiKey()">🔑 AI Key</button>
+            <button class="btn btn-start" onclick="generateFull100Questions()">⚡ নতুন মডেল টেস্ট</button>
+            <button class="btn btn-history" onclick="openHistoryModal()">📜 পূর্ববর্তী পরীক্ষার হিস্ট্রি</button>
+            <div class="timer-box">⏱️ সময়: <span id="timer">৬০:০০</span></div>
+            
+            <div class="candidate-select">
+                <select id="candidate-type">
+                    <option value="0">১ম বার (০.০০)</option>
+                    <option value="5">২য় বার (-৫.০০)</option>
+                    <option value="7.5">ম্যাটস (-৭.৫০)</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- Marks Distribution Banner -->
+    <section class="distribution-card">
+        <h3>অফিশিয়াল মানবণ্টন ও সাবজেক্ট চয়েস (যেকোনো একটি বা সম্পূর্ণ সিলেক্ট করুন)</h3>
+        <div class="subject-badges">
+            <button class="badge bio-badge active" onclick="selectSubjectFilter('FULL', event)">💯 সম্পূর্ণ ১০০ নম্বর (পার্ট বাই পার্ট)</button>
+            <button class="badge bio-badge" onclick="selectSubjectFilter('BIO', event)">🧬 জীববিজ্ঞান: ৩০</button>
+            <button class="badge chem-badge" onclick="selectSubjectFilter('CHEM', event)">🧪 রসায়ন: ২৫</button>
+            <button class="badge phy-badge" onclick="selectSubjectFilter('PHY', event)">⚛️ পদার্থবিজ্ঞান: ১৫</button>
+            <button class="badge eng-badge" onclick="selectSubjectFilter('ENG', event)">🔤 ইংরেজি: ১৫</button>
+            <button class="badge gk-badge" onclick="selectSubjectFilter('GK', event)">🌐 সা.জ্ঞান: ১৫</button>
+        </div>
+        <p class="info-text">প্রতিটি সঠিক উত্তরে +১.০০, ভুল উত্তরে -০.২৫। পরীক্ষা শেষে প্রতিটি প্রশ্নের লেখক, অধ্যায় ও পৃষ্ঠা নম্বর সহ বিস্তারিত ব্যাখ্যা সেভ থাকবে।</p>
+    </section>
+
+    <!-- Main Section -->
+    <main class="main-container">
+        <!-- Question Box Panel -->
+        <div class="question-card">
+            <div>
+                <div class="q-header">
+                    <span id="question-number" class="q-number">প্রশ্ন নং: ১</span>
+                    <span id="subject-tag" class="subject-tag">বিষয়</span>
+                </div>
+
+                <div id="question-text" class="question-text">প্রশ্নপত্র তৈরি হচ্ছে...</div>
+                <div id="options-container" class="options-container"></div>
+
+                <div id="explanation-box" class="explanation-box" style="display:none;">
+                    <div id="explanation-ref" class="ref-text"></div>
+                    <div id="explanation-text" class="exp-text"></div>
+                </div>
+            </div>
+
+            <div class="q-footer">
+                <button class="btn btn-history" onclick="prevQuestion()">⬅️ আগের প্রশ্ন</button>
+                <button class="btn btn-danger" onclick="submitExam()">🎯 উত্তরপত্র জমা দিন</button>
+                <button class="btn btn-history" onclick="nextQuestion()">পরের প্রশ্ন ➡️</button>
+            </div>
+        </div>
+
+        <!-- OMR Response Grid -->
+        <aside class="omr-card">
+            <h3>::: OMR গ্রিড</h3>
+            <p class="omr-subtext">যেকোনো নম্বরে চাপ দিয়ে সরাসরি ওই প্রশ্নে যান।</p>
+            <button class="btn btn-danger btn-full" onclick="submitExam()">🚀 উত্তরপত্র জমা দিন</button>
+            <div id="omr-grid" class="omr-grid"></div>
+        </aside>
+    </main>
+
+    <!-- Result Modal -->
+    <div id="result-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <h2>🎉 পরীক্ষার ফলাফল</h2>
+            <div class="score-display">
+                <span id="final-score">০.০০</span> <span class="max-score">/ <span id="max-possible-score">১০০</span></span>
+            </div>
+            <div class="result-breakdown">
+                <div class="breakdown-row"><span>সঠিক উত্তর:</span> <strong id="correct-count" class="text-success">০</strong></div>
+                <div class="breakdown-row"><span>ভুল উত্তর:</span> <strong id="wrong-count" class="text-danger">০</strong></div>
+                <div class="breakdown-row"><span>নেগেটিভ মার্কস:</span> <strong id="negative-marks" class="text-danger">০.০০</strong></div>
+            </div>
+            <button class="btn btn-start" onclick="reviewExam()">📖 উত্তরমালা, শর্টকাট ও রেফারেন্স দেখুন</button>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="history-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>📜 পূর্ববর্তী পরীক্ষার হিস্ট্রি (বিস্তারিত)</h3>
+                <button onclick="closeHistoryModal()" class="btn btn-history">✖ বন্ধ করুন</button>
+            </div>
+            <div id="history-list" class="history-list"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
